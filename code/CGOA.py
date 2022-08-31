@@ -105,22 +105,18 @@ class CGOA:
         self.MX = np.where(self.MX > self.ub, self.ub, self.MX)
 
     def generate(self):
-        # bug causing...
-
         x = np.random.rand(self.dimension)
         a, b = (-1 - self.mu) / self.sigma, (1 - self.mu) / self.sigma
         y = truncnorm.cdf(x, a, b, loc=self.mu, scale=self.sigma)
-        y = np.where(np.isnan(y), 1e-20, y)
+        y = np.where(np.isnan(y), 1e-9, y)
         x_actual = y * (self.ub - self.lb) / 2 + (self.ub + self.lb) / 2
         return x_actual
 
     def compete(self, x1, x2):
-        fx1 = self.fitness_func(x1)
-        fx2 = self.fitness_func(x2)
-        if fx1 < fx2:
-            winner, loser = fx1, fx2
+        if self.fitness_func(x1) < self.fitness_func(x2):
+            winner, loser = x1, x2
         else:
-            winner, loser = fx2, fx1
+            winner, loser = x2, x1
         return winner, loser
 
     def update(self):
@@ -135,6 +131,7 @@ class CGOA:
     def run(self):
         self.initialize()
         self.MX = self.X
+
         self.pop_fit = self.fitness_func(self.X)
         if self.pop_fit < self.fmin:
             self.fmin = self.pop_fit
@@ -148,8 +145,8 @@ class CGOA:
                 winner, loser = self.exploitation(iteration)
 
             last = self.mu
-            self.mu = last + (1 / self.Np) * np.abs(winner - loser)
-            self.sigma = np.sqrt(np.square(self.sigma) + np.square(last) - np.square(self.mu) + (1 / self.Np) * np.abs(np.square(winner) - np.square(loser)))
+            self.mu = last + (1 / self.Np) * (winner - loser)
+            self.sigma = np.sqrt(np.abs(np.square(self.sigma) + np.square(last) - np.square(self.mu) + (1 / self.Np) * (np.square(winner) - np.square(loser))))
 
             # update
             winner, loser = self.compete(self.X, self.best)
@@ -157,7 +154,4 @@ class CGOA:
             self.curve[iteration] = self.fitness_func(self.best)
 
         # plot
-        plt.xlabel('$Iterations$')
-        plt.ylabel('$Best$ $value$')
         plt.plot(np.arange(self.max_iter), self.curve, label='CGOA')
-        

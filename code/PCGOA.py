@@ -44,7 +44,7 @@ class PCGOA:
     def initialize(self):
         self.X = np.random.rand(self.groups, self.dimension)
         for d in range(self.dimension):
-            self.X[:, d] = np.random.rand() * (self.ub[d] - self.lb[d]) + self.lb[d]
+            self.X[:, d] = np.random.rand(self.groups) * (self.ub[d] - self.lb[d]) + self.lb[d]
 
     def exploration(self, iteration, group):
         t = 1 - iteration / self.max_iter
@@ -103,8 +103,8 @@ class PCGOA:
         beta = 1.5
         sigma = (gamma(1 + beta) * np.sin(np.pi * beta / 2) / (
             gamma(((1 + beta) / 2) * beta * 2 ** ((beta - 1) / 2)))) ** (1 / beta)
-        mu = np.random.rand(1, dimension)
-        v = np.random.rand(1, dimension)
+        mu = np.random.rand(dimension)
+        v = np.random.rand(dimension)
         return 0.01 * mu * sigma / ((np.abs(v)) ** (1 / beta))
 
     def bound_check(self, group):
@@ -112,22 +112,18 @@ class PCGOA:
         self.MX[group] = np.where(self.MX[group] > self.ub, self.ub, self.MX[group])
 
     def generate(self, group):
-        # bug causing...
-
         x = np.random.rand(self.dimension)
         a, b = (-1 - self.mu[group]) / self.sigma[group], (1 - self.mu[group]) / self.sigma[group]
         y = truncnorm.cdf(x, a, b, loc=self.mu[group], scale=self.sigma[group])
-        y = np.where(np.isnan(y), 1e-20, y)
+        y = np.where(np.isnan(y), 1e-9, y)
         x_actual = y * (self.ub - self.lb) / 2 + (self.ub + self.lb) / 2
         return x_actual
 
     def compete(self, x1, x2):
-        fx1 = self.fitness_func(x1)
-        fx2 = self.fitness_func(x2)
-        if fx1 < fx2:
-            winner, loser = fx1, fx2
+        if self.fitness_func(x1) < self.fitness_func(x2):
+            winner, loser = x1, x2
         else:
-            winner, loser = fx2, fx1
+            winner, loser = x2, x1
         return winner, loser
 
     def update(self, group):
@@ -142,6 +138,12 @@ class PCGOA:
     def run(self):
         self.initialize()
         self.MX = self.X
+
+        for g in range(self.groups):
+            if self.total_best > self.fitness_func(self.X[g]):
+                self.total_best = self.fitness_func(self.X[g])
+        self.best = self.X
+
         for iteration in range(self.max_iter):
             for g in range(self.groups):
                 self.pop_fit[g] = self.fitness_func(self.X[g])
@@ -156,8 +158,8 @@ class PCGOA:
                     winner, loser = self.exploitation(iteration, g)
 
                 last = self.mu[g]
-                self.mu[g] = last + (1 / self.Np) * np.abs(winner - loser)
-                self.sigma[g] = np.sqrt(np.square(self.sigma[g]) + np.square(last) - np.square(self.mu[g]) + (1 / self.Np) * np.abs(np.square(winner) - np.square(loser)))
+                self.mu[g] = last + (1 / self.Np) * (winner - loser)
+                self.sigma[g] = np.sqrt(np.abs(np.square(self.sigma[g]) + np.square(last) - np.square(self.mu[g]) + (1 / self.Np) * (np.square(winner) - np.square(loser))))
 
                 # update group best & fmin
                 fitness = self.fitness_func(winner)
@@ -213,7 +215,7 @@ class PCGOA:
 
                         if mean_current < mean_global:
                             part_current = sorted_current[:slices]
-                            part_global = sorted_global[:slices]
+                            part_global = sorted_global[:(self.dimension - slices)]
                             new_group = np.append(part_current, part_global)
                             new_fitness = self.fitness_func(new_group)
                             if new_fitness < self.global_fmin:
@@ -244,7 +246,7 @@ class PCGOA:
 
                     if mean_random < mean_global:
                         part_random = sorted_random[:slices]
-                        part_global = sorted_global[:slices]
+                        part_global = sorted_global[:(self.dimension - slices)]
                         new_group = np.append(part_random, part_global)
                         new_fitness = self.fitness_func(new_group)
                         if new_fitness < self.global_fmin:
@@ -264,7 +266,4 @@ class PCGOA:
             self.curve[iteration] = self.total_best
 
         # plot
-        plt.xlabel('$Iterations$')
-        plt.ylabel('$Best$ $value$')
         plt.plot(np.arange(self.max_iter), self.curve, label='PCGOA')
-        

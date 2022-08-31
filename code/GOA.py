@@ -32,11 +32,8 @@ class GOA:
     def initialize(self):
         # X: D * N
         self.X = np.random.rand(self.dimension, self.population)
-        if self.dimension == 1:
-            self.X = np.random.rand(1, self.population) * (self.ub - self.lb) + self.lb
-        elif self.dimension > 1:
-            for d in range(self.dimension):
-                self.X[d] = np.random.rand(1, self.population) * (self.ub[d] - self.lb[d]) + self.lb[d]
+        for d in range(self.dimension):
+            self.X[d] = np.random.rand(self.population) * (self.ub[d] - self.lb[d]) + self.lb[d]
 
     def exploration(self, iteration):
         t = 1 - iteration / self.max_iter
@@ -53,7 +50,10 @@ class GOA:
             Xi = self.X[:, iter]
             if q >= 0.5:
                 u1 = np.random.uniform(-a, a, self.dimension)
-                Xr = self.X[:, int(np.random.uniform(0, self.population, 1))]
+                rand = int(np.random.uniform(0, self.population, 1))
+                while rand == iter:
+                    rand = int(np.random.uniform(0, self.population, 1))
+                Xr = self.X[:, rand]
                 u2 = A * (Xi - Xr)
                 self.MX[:, iter] = Xi + u1 + u2
             else:
@@ -90,8 +90,8 @@ class GOA:
         beta = 1.5
         sigma = (gamma(1 + beta) * np.sin(np.pi * beta / 2) / (
             gamma(((1 + beta) / 2) * beta * 2 ** ((beta - 1) / 2)))) ** (1 / beta)
-        mu = np.random.rand(1, dimension)
-        v = np.random.rand(1, dimension)
+        mu = np.random.rand(dimension)
+        v = np.random.rand(dimension)
         return 0.01 * mu * sigma / ((np.abs(v)) ** (1 / beta))
 
     def bound_check(self):
@@ -120,7 +120,8 @@ class GOA:
                 self.best = self.pop_fit[i]
                 self.Xb = self.X[:, i]
 
-        for iteration in range(self.max_iter):
+        self.curve[0] = self.best
+        for iteration in range(1, self.max_iter):
             rand = np.random.rand()
             if rand > 0.5:
                 self.exploration(iteration)
@@ -129,7 +130,4 @@ class GOA:
             self.curve[iteration] = self.best
 
         # plot
-        plt.xlabel('iteration')
-        plt.ylabel('best value')
         plt.plot(np.arange(self.max_iter), self.curve, label='GOA')
-        
