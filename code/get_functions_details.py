@@ -25,10 +25,10 @@ def F2(x):
 
 
 def F3(x):
-    dim = np.size(x)
+    dim = np.size(x, 0)
     result = 0
     for d in range(dim):
-        result = result + np.sum(x[:d+1]) ** 2
+        result = result + np.sum(x[:d + 1]) ** 2
     return result
 
 
@@ -45,7 +45,7 @@ def F6(x):
 
 
 def F7(x):
-    dim = np.size(x)
+    dim = np.size(x, 0)
     return np.sum(np.arange(1, dim + 1) * (x ** 4)) + np.random.rand()
 
 
@@ -54,32 +54,38 @@ def F8(x):
 
 
 def F9(x):
-    dim = np.size(x)
+    dim = np.size(x, 0)
     return np.sum(np.square(x) - 10 * np.cos(2 * np.pi * x)) + 10 * dim
 
 
 def F10(x):
-    dim = np.size(x)
-    return -20 * np.exp(-2 * np.sqrt(np.sum(np.square(x)) / dim)) - np.exp(np.sum(np.cos(2 * np.pi * x)) / dim) + 20 + np.exp(1)
+    dim = np.size(x, 0)
+    return -20 * np.exp(-2 * np.sqrt(np.sum(np.square(x)) / dim)) - np.exp(
+        np.sum(np.cos(2 * np.pi * x)) / dim) + 20 + np.exp(1)
 
 
 def F11(x):
-    dim = np.size(x)
+    dim = np.size(x, 0)
     return np.sum(np.square(x)) / 4000 - np.prod(np.cos(x / np.sqrt(np.arange(1, dim + 1)))) + 1
 
 
 def F12(x):
-    dim = np.size(x)
-    return (np.pi / dim) * (10 * (np.square(np.sin(np.pi * (1 + (x[0] + 1) / 4)))) + sum((np.square((x[:-1] + 1) / 4)) * (1 + 10 * np.square(np.sin(np.pi * (1 + (x[1:] + 1) / 4))))) + np.square((x[-1] + 1) / 4)) + np.sum(Ufun(x, 10, 100, 4))
+    dim = np.size(x, 0)
+    return (np.pi / dim) * (10 * (np.square(np.sin(np.pi * (1 + (x[0] + 1) / 4)))) + sum(
+        (np.square((x[:-1] + 1) / 4)) * (1 + 10 * np.square(np.sin(np.pi * (1 + (x[1:] + 1) / 4))))) + np.square(
+        (x[-1] + 1) / 4)) + np.sum(Ufun(x, 10, 100, 4))
 
 
 def F13(x):
-    return 1 * (np.square(np.sin(3 * np.pi * x[0])) + sum(np.square(x[:-1] - 1) * (1 + np.square(np.sin(3 * np.pi * x[1:])))) + (np.square(x[-1] - 1)) * (1 + np.square(np.sin(2 * np.pi * x[-1])))) + np.sum(Ufun(x, 5, 100, 4))
+    return 1 * (np.square(np.sin(3 * np.pi * x[0])) + sum(
+        np.square(x[:-1] - 1) * (1 + np.square(np.sin(3 * np.pi * x[1:])))) + (np.square(x[-1] - 1)) * (
+                            1 + np.square(np.sin(2 * np.pi * x[-1])))) + np.sum(Ufun(x, 5, 100, 4))
 
 
 def F14(x):
-    aS = np.array([[-32, -16, 0, 16, 32, -32, -16, 0, 16, 32, -32, -16, 0, 16, 32, -32, -16, 0, 16, 32, -32, -16, 0, 16, 32],
-                  [-32, -32, -32, -32, -32, -16, -16, -16, -16, -16, 0, 0, 0, 0, 0, 16, 16, 16, 16, 16, 32, 32, 32, 32, 32]])
+    aS = np.array(
+        [[-32, -16, 0, 16, 32, -32, -16, 0, 16, 32, -32, -16, 0, 16, 32, -32, -16, 0, 16, 32, -32, -16, 0, 16, 32],
+         [-32, -32, -32, -32, -32, -16, -16, -16, -16, -16, 0, 0, 0, 0, 0, 16, 16, 16, 16, 16, 32, 32, 32, 32, 32]])
     # aS.shape = (2, 25)
     bS = np.random.rand(25)
     for i in range(25):
@@ -98,11 +104,15 @@ def F16(x):
 
 
 def F17(x):
-    return (x[1] - (x[0] ** 2) * 5.1 / (4 * (np.pi ** 2)) + 5 / np.pi * x[0] - 6) ** 2 + 10 * (1 - 1 / (8 * np.pi)) * np.cos(x[0]) + 10
+    return (x[1] - (x[0] ** 2) * 5.1 / (4 * (np.pi ** 2)) + 5 / np.pi * x[0] - 6) ** 2 + 10 * (
+                1 - 1 / (8 * np.pi)) * np.cos(x[0]) + 10
 
 
 def F18(x):
-    return (1 + ((x[0] + x[1] + 1) ** 2) * (19 - 14 * x[0] + 3 * (x[0] ** 2) - 14 * x[1] + 6 * x[0] * x[1] + 3 * (x[1] ** 2))) * (30 + ((2 * x[0] - 3 * x[1]) ** 2) * (18 - 32 * x[0] + 12 * (x[0] ** 2) + 48 * x[1] - 36 * x[0] * x[1] + 27 * (x[1] ** 2)))
+    return (1 + ((x[0] + x[1] + 1) ** 2) * (
+                19 - 14 * x[0] + 3 * (x[0] ** 2) - 14 * x[1] + 6 * x[0] * x[1] + 3 * (x[1] ** 2))) * (
+                       30 + ((2 * x[0] - 3 * x[1]) ** 2) * (
+                           18 - 32 * x[0] + 12 * (x[0] ** 2) + 48 * x[1] - 36 * x[0] * x[1] + 27 * (x[1] ** 2)))
 
 
 def F19(x):
@@ -139,15 +149,15 @@ def F20(x):
 
 def F21(x):
     aSH = np.matrix([[4, 4, 4, 4],
-                    [1, 1, 1, 1],
-                    [8, 8, 8, 8],
-                    [6, 6, 6, 6],
-                    [3, 7, 3, 7],
-                    [2, 9, 2, 9],
-                    [5, 5, 3, 3],
-                    [8, 1, 8, 1],
-                    [6, 2, 6, 2],
-                    [7, 3.6, 7, 3.6]])
+                     [1, 1, 1, 1],
+                     [8, 8, 8, 8],
+                     [6, 6, 6, 6],
+                     [3, 7, 3, 7],
+                     [2, 9, 2, 9],
+                     [5, 5, 3, 3],
+                     [8, 1, 8, 1],
+                     [6, 2, 6, 2],
+                     [7, 3.6, 7, 3.6]])
     cSH = np.matrix([[0.1], [0.2], [0.2], [0.4], [0.4], [0.6], [0.3], [0.7], [0.5], [0.5]])
     o = 0
     for i in range(5):
@@ -192,6 +202,43 @@ def F23(x):
         y = x - aSH[i]
         o = o - (y * y.transpose() + cSH[i]) ** (-1)
     return o
+
+
+def Rosenbrock(x):
+    dim = np.size(x, 0)
+    sum = 0
+
+    for d in range(dim - 1):
+        x_i = x[d]
+        x_next = x[d + 1]
+        new = 100 * np.square(x_next - np.square(x_i)) + np.square(x_i - 1)
+        sum += new
+
+    return sum
+
+
+def Rastrigin(x):
+    dim = np.size(x, 0)
+    sum = 0
+
+    for d in range(dim):
+        x_i = x[d]
+        sum += (np.square(x_i) - 10 * np.cos(2 * np.pi * x_i))
+
+    return 10 * dim + sum
+
+
+def Griewank(x):
+    dim = np.size(x, 0)
+    sum = 0
+    prod = 1
+
+    for d in range(dim):
+        x_i = x[d]
+        sum += np.square(x_i) / 4000
+        prod *= np.cos(x_i / np.sqrt(d + 1))
+
+    return sum - prod + 1
 
 
 def func(F):
@@ -315,6 +362,21 @@ def func(F):
         lb = 0
         ub = 10
         dim = 4
+    elif F == 'Rosenbrock':
+        obj = Rosenbrock
+        lb = -5
+        ub = 10
+        dim = 100
+    elif F == 'Rastrigin':
+        obj = Rastrigin
+        lb = 2.56
+        ub = 5.12
+        dim = 100
+    elif F == 'Griewank':
+        obj = Griewank
+        lb = -600
+        ub = 600
+        dim = 100
     else:
         pass
 

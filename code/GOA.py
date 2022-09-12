@@ -2,7 +2,6 @@
 # Gannet Optimization Algorithm
 
 import numpy as np
-import matplotlib.pyplot as plt
 from scipy.special import gamma
 
 
@@ -26,14 +25,8 @@ class GOA:
         self.Xb = None
         self.pop_fit = np.ones(self.population) * np.inf
         self.best = np.inf
-        self.curve = np.zeros(self.max_iter)
+        self.curve = np.zeros(self.max_iter + 1)
         self.fitness_func = func
-
-    def initialize(self):
-        # X: D * N
-        self.X = np.random.rand(self.dimension, self.population)
-        for d in range(self.dimension):
-            self.X[d] = np.random.rand(self.population) * (self.ub[d] - self.lb[d]) + self.lb[d]
 
     def exploration(self, iteration):
         t = 1 - iteration / self.max_iter
@@ -45,6 +38,7 @@ class GOA:
         b = 2 * V(2 * np.pi * np.random.rand()) * t
         A = (2 * np.random.rand() - 1) * a
         B = (2 * np.random.rand() - 1) * b
+        
         for iter in range(self.population):
             q = np.random.rand()
             Xi = self.X[:, iter]
@@ -96,8 +90,10 @@ class GOA:
 
     def bound_check(self):
         for i in range(self.population):
-            self.MX[:, i] = np.where(self.MX[:, i] < self.lb, self.lb, self.MX[:, i])
-            self.MX[:, i] = np.where(self.MX[:, i] > self.ub, self.ub, self.MX[:, i])
+            self.MX[:, i] = np.where(
+                self.MX[:, i] < self.lb, self.lb, self.MX[:, i])
+            self.MX[:, i] = np.where(
+                self.MX[:, i] > self.ub, self.ub, self.MX[:, i])
 
     def update(self):
         for i in range(self.population):
@@ -110,9 +106,13 @@ class GOA:
                 self.Xb = self.MX[:, i]
 
     def run(self):
-        self.initialize()
+        # X: D * N
+        self.X = np.random.rand(self.dimension, self.population)
+        for d in range(self.dimension):
+            self.X[d] = np.random.rand(
+                self.population) * (self.ub[d] - self.lb[d]) + self.lb[d]
         self.MX = self.X
-        self.Xb = self.X
+        self.Xb = self.X[:, 0]
 
         for i in range(self.population):
             self.pop_fit[i] = self.fitness_func(self.X[:, i])
@@ -120,14 +120,10 @@ class GOA:
                 self.best = self.pop_fit[i]
                 self.Xb = self.X[:, i]
 
-        self.curve[0] = self.best
-        for iteration in range(1, self.max_iter):
+        for iteration in range(1, self.max_iter + 1):
             rand = np.random.rand()
             if rand > 0.5:
                 self.exploration(iteration)
             else:
                 self.exploitation(iteration)
             self.curve[iteration] = self.best
-
-        # plot
-        plt.plot(np.arange(self.max_iter), self.curve, label='GOA')
