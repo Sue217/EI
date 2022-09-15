@@ -145,7 +145,7 @@ class PGOA:
                     self.group_min[G] = self.pop_fit[G][i]
                     self.group_best[G] = self.X[G, :, i]
 
-        sub_groups = self.groups // 2
+        # sub_groups = self.groups // 2
         n = int(np.log2(self.groups))
         m = 0
 
@@ -172,12 +172,12 @@ class PGOA:
                 if self.strategy == 1:
                     if iter % self.rate == 0:
                         sorted_pop_fit = np.sort(self.pop_fit[G])[::-1]
-                        idx = int(np.size(sorted_pop_fit) * self.migration)
-                        if self.migration == 1.0:
-                            idx = -1
-                        expected_pop_fit = sorted_pop_fit[idx]
+                        # idx = int(np.size(sorted_pop_fit) * self.migration)
+                        # if self.migration == 1.0:
+                        #     idx = -1
+                        expected_pop_fit = sorted_pop_fit[int(np.size(sorted_pop_fit) * self.migration)]
                         for i in range(self.Np):
-                            if self.fitness_func(self.X[G, :, i]) > expected_pop_fit:
+                            if self.fitness_func(self.X[G, :, i]) >= expected_pop_fit:
                                 self.X[G, :, i] = self.global_best
 
                 elif self.strategy == 2:
@@ -198,17 +198,18 @@ class PGOA:
 
                 elif self.strategy == 3:
                     if iter % self.rate == 0:
+
                         # Strategy 1
-                        if G < sub_groups:
+                        if G % 3 == 0:
                             sorted_pop_fit = np.sort(self.pop_fit[G])[::-1]
-                            idx = int(np.size(sorted_pop_fit)
-                                      * self.migration)
-                            if self.migration == 1.0:
-                                idx = -1
-                            expected_pop_fit = sorted_pop_fit[idx]
+                            # idx = int(np.size(sorted_pop_fit) * self.migration)
+                            # if self.migration == 1.0:
+                            #     idx = -1
+                            expected_pop_fit = sorted_pop_fit[int(np.size(sorted_pop_fit) * self.migration)]
                             for i in range(self.Np):
-                                if self.fitness_func(self.X[G, :, i]) > expected_pop_fit:
+                                if self.fitness_func(self.X[G, :, i]) >= expected_pop_fit:
                                     self.X[G, :, i] = self.global_best
+
                         # Strategy 2
                         else:
                             while self.copies > 0:
