@@ -171,14 +171,20 @@ class PGOA:
 
                 if self.strategy == 1:
                     if iter % self.rate == 0:
-                        sorted_pop_fit = np.sort(self.pop_fit[G])[::-1]
-                        # idx = int(np.size(sorted_pop_fit) * self.migration)
-                        # if self.migration == 1.0:
-                        #     idx = -1
-                        expected_pop_fit = sorted_pop_fit[int(np.size(sorted_pop_fit) * self.migration)]
-                        for i in range(self.Np):
-                            if self.fitness_func(self.X[G, :, i]) >= expected_pop_fit:
-                                self.X[G, :, i] = self.global_best
+                        if iter % (self.rate * 2) == 0:
+                            # global update
+                            sorted_pop_fit = np.sort(self.pop_fit[G])[::-1]
+                            expected_pop_fit = sorted_pop_fit[int(np.size(sorted_pop_fit) * self.migration)]
+                            for i in range(self.Np):
+                                if self.fitness_func(self.X[G, :, i]) >= expected_pop_fit:
+                                    self.X[G, :, i] = self.global_best
+                        else:
+                            # local update
+                            sorted_pop_fit = np.sort(self.pop_fit[G])[::-1]
+                            expected_pop_fit = sorted_pop_fit[int(np.size(sorted_pop_fit) * self.migration)]
+                            for i in range(self.Np):
+                                if self.fitness_func(self.X[G, :, i]) >= expected_pop_fit:
+                                    self.X[G, :, i] = self.group_best[G]
 
                 elif self.strategy == 2:
                     if iter % self.rate == 0:
@@ -198,17 +204,24 @@ class PGOA:
 
                 elif self.strategy == 3:
                     if iter % self.rate == 0:
+                        rand = np.random.rand()
 
                         # Strategy 1
-                        if G % 3 == 0:
-                            sorted_pop_fit = np.sort(self.pop_fit[G])[::-1]
-                            # idx = int(np.size(sorted_pop_fit) * self.migration)
-                            # if self.migration == 1.0:
-                            #     idx = -1
-                            expected_pop_fit = sorted_pop_fit[int(np.size(sorted_pop_fit) * self.migration)]
-                            for i in range(self.Np):
-                                if self.fitness_func(self.X[G, :, i]) >= expected_pop_fit:
-                                    self.X[G, :, i] = self.global_best
+                        if rand <= 0.5:
+                            if iter % (self.rate * 2) == 0:
+                                # global update
+                                sorted_pop_fit = np.sort(self.pop_fit[G])[::-1]
+                                expected_pop_fit = sorted_pop_fit[int(np.size(sorted_pop_fit) * self.migration)]
+                                for i in range(self.Np):
+                                    if self.fitness_func(self.X[G, :, i]) >= expected_pop_fit:
+                                        self.X[G, :, i] = self.global_best
+                            else:
+                                # local update
+                                sorted_pop_fit = np.sort(self.pop_fit[G])[::-1]
+                                expected_pop_fit = sorted_pop_fit[int(np.size(sorted_pop_fit) * self.migration)]
+                                for i in range(self.Np):
+                                    if self.fitness_func(self.X[G, :, i]) >= expected_pop_fit:
+                                        self.X[G, :, i] = self.group_best[G]
 
                         # Strategy 2
                         else:
