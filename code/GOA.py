@@ -44,9 +44,9 @@ class GOA:
             Xi = self.X[:, iter]
             if q >= 0.5:
                 u1 = np.random.uniform(-a, a, self.dimension)
-                rand = int(np.random.uniform(0, self.population, 1))
+                rand = np.random.randint(self.population)
                 while rand == iter:
-                    rand = int(np.random.uniform(0, self.population, 1))
+                    rand = np.random.randint(self.population)
                 Xr = self.X[:, rand]
                 u2 = A * (Xi - Xr)
                 self.MX[:, iter] = Xi + u1 + u2

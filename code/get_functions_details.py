@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.optimize import rosen
 
 """
 This function contains full information and implementation of 
@@ -16,6 +17,8 @@ def Ufun(x, a, k, m):
     return k * ((x - a) ** m) * (x > a) + k * ((-x - a) ** m) * (x < (-a))
 
 
+# Function 1-7: Uni-modal test functions
+
 def F1(x):
     return np.sum(np.square(x))
 
@@ -28,7 +31,7 @@ def F3(x):
     dim = np.size(x, 0)
     result = 0
     for d in range(dim):
-        result = result + np.sum(x[:d + 1]) ** 2
+        result += np.square(np.sum(x[:d + 1]))
     return result
 
 
@@ -37,11 +40,12 @@ def F4(x):
 
 
 def F5(x):
+    # Rosenbrock
     return np.sum(100 * np.square(x[1:] - np.square(x[:-1])) + np.square(x[:-1] - 1))
 
 
 def F6(x):
-    return np.sum(np.square(np.abs(x + 5)))
+    return np.sum(np.square(np.abs(x + 0.5)))
 
 
 def F7(x):
@@ -49,37 +53,38 @@ def F7(x):
     return np.sum(np.arange(1, dim + 1) * (x ** 4)) + np.random.rand()
 
 
+# Function 8-13: Multi-modal test functions
 def F8(x):
     return np.sum(-x * np.sin(np.sqrt(np.abs(x))))
 
 
 def F9(x):
-    dim = np.size(x, 0)
-    return np.sum(np.square(x) - 10 * np.cos(2 * np.pi * x)) + 10 * dim
+    # Rastrigin
+    return 10.0 * np.size(x, 0) + np.sum(np.square(x) - 10 * np.cos(2 * np.pi * x))
 
 
 def F10(x):
-    dim = np.size(x, 0)
-    return -20 * np.exp(-2 * np.sqrt(np.sum(np.square(x)) / dim)) - np.exp(
-        np.sum(np.cos(2 * np.pi * x)) / dim) + 20 + np.exp(1)
+    return -20 * np.exp(-0.2 * np.sqrt(np.mean(np.square(x)))) - np.exp(
+        np.mean(np.cos(2 * np.pi * x))) + 20 + np.exp(1)
 
 
 def F11(x):
+    # Griewank
     dim = np.size(x, 0)
-    return np.sum(np.square(x)) / 4000 - np.prod(np.cos(x / np.sqrt(np.arange(1, dim + 1)))) + 1
+    return 1.0 + np.sum(np.square(x)) / 4000.0 - np.prod(np.cos(x / np.sqrt(np.arange(1, dim + 1))))
 
 
 def F12(x):
     dim = np.size(x, 0)
-    return (np.pi / dim) * (10 * (np.square(np.sin(np.pi * (1 + (x[0] + 1) / 4)))) + sum(
-        (np.square((x[:-1] + 1) / 4)) * (1 + 10 * np.square(np.sin(np.pi * (1 + (x[1:] + 1) / 4))))) + np.square(
-        (x[-1] + 1) / 4)) + np.sum(Ufun(x, 10, 100, 4))
+    return (np.pi / dim) * 10 * np.sin(np.pi * (1 + (x[0] + 1) / 4)) + np.sum(
+        (np.square((x[:-1] + 1) / 4)) * (
+                1 + 10 * np.square(np.sin(np.pi * ((x[:-1] + 1) / 4 + 1) + 1)) + np.sum(Ufun(x, 10, 100, 4))))
 
 
 def F13(x):
-    return 1 * (np.square(np.sin(3 * np.pi * x[0])) + sum(
-        np.square(x[:-1] - 1) * (1 + np.square(np.sin(3 * np.pi * x[1:])))) + (np.square(x[-1] - 1)) * (
-                            1 + np.square(np.sin(2 * np.pi * x[-1])))) + np.sum(Ufun(x, 5, 100, 4))
+    return 0.1 * (np.square(np.sin(3 * np.pi * x[0])) + np.sum(
+        np.square(x - 1) * (1 + np.square(np.sin(3 * np.pi * x + 1)))) + (np.square(x[-1] - 1)) + np.square(
+        np.sin(2 * np.pi * x[-1]))) + np.sum(Ufun(x, 5, 100, 4))
 
 
 def F14(x):
@@ -105,14 +110,14 @@ def F16(x):
 
 def F17(x):
     return (x[1] - (x[0] ** 2) * 5.1 / (4 * (np.pi ** 2)) + 5 / np.pi * x[0] - 6) ** 2 + 10 * (
-                1 - 1 / (8 * np.pi)) * np.cos(x[0]) + 10
+            1 - 1 / (8 * np.pi)) * np.cos(x[0]) + 10
 
 
 def F18(x):
     return (1 + ((x[0] + x[1] + 1) ** 2) * (
-                19 - 14 * x[0] + 3 * (x[0] ** 2) - 14 * x[1] + 6 * x[0] * x[1] + 3 * (x[1] ** 2))) * (
-                       30 + ((2 * x[0] - 3 * x[1]) ** 2) * (
-                           18 - 32 * x[0] + 12 * (x[0] ** 2) + 48 * x[1] - 36 * x[0] * x[1] + 27 * (x[1] ** 2)))
+            19 - 14 * x[0] + 3 * (x[0] ** 2) - 14 * x[1] + 6 * x[0] * x[1] + 3 * (x[1] ** 2))) * (
+                   30 + ((2 * x[0] - 3 * x[1]) ** 2) * (
+                   18 - 32 * x[0] + 12 * (x[0] ** 2) + 48 * x[1] - 36 * x[0] * x[1] + 27 * (x[1] ** 2)))
 
 
 def F19(x):
@@ -205,40 +210,16 @@ def F23(x):
 
 
 def Rosenbrock(x):
-    dim = np.size(x, 0)
-    sum = 0
-
-    for d in range(dim - 1):
-        x_i = x[d]
-        x_next = x[d + 1]
-        new = 100 * np.square(x_next - np.square(x_i)) + np.square(x_i - 1)
-        sum += new
-
-    return sum
+    return rosen(x)
 
 
 def Rastrigin(x):
-    dim = np.size(x, 0)
-    sum = 0
-
-    for d in range(dim):
-        x_i = x[d]
-        sum += (np.square(x_i) - 10 * np.cos(2 * np.pi * x_i))
-
-    return 10 * dim + sum
+    return 10.0 * np.size(x, 0) + np.sum(np.square(x) - 10 * np.cos(2 * np.pi * x))
 
 
 def Griewank(x):
     dim = np.size(x, 0)
-    sum = 0
-    prod = 1
-
-    for d in range(dim):
-        x_i = x[d]
-        sum += np.square(x_i) / 4000
-        prod *= np.cos(x_i / np.sqrt(d + 1))
-
-    return sum - prod + 1
+    return 1.0 + np.sum(np.square(x)) / 4000.0 - np.prod(np.cos(x / np.sqrt(np.arange(1, dim + 1))))
 
 
 def func(F):
@@ -251,67 +232,67 @@ def func(F):
         obj = F1
         lb = -100
         ub = 100
-        dim = 30
+        dim = 50
     elif F == 'F2':
         obj = F2
         lb = -10
         ub = 10
-        dim = 30
+        dim = 50
     elif F == 'F3':
         obj = F3
         lb = -100
         ub = 100
-        dim = 30
+        dim = 50
     elif F == 'F4':
         obj = F4
         lb = -100
         ub = 100
-        dim = 30
+        dim = 50
     elif F == 'F5':
         obj = F5
         lb = -30
         ub = 30
-        dim = 30
+        dim = 50
     elif F == 'F6':
         obj = F6
         lb = -100
         ub = 100
-        dim = 30
+        dim = 50
     elif F == 'F7':
         obj = F7
         lb = -1.28
         ub = 1.28
-        dim = 30
+        dim = 50
     elif F == 'F8':
         obj = F8
         lb = -500
         ub = 500
-        dim = 30
+        dim = 50
     elif F == 'F9':
         obj = F9
         lb = -5.12
         ub = 5.12
-        dim = 30
+        dim = 50
     elif F == 'F10':
         obj = F10
         lb = -32
         ub = 32
-        dim = 30
+        dim = 50
     elif F == 'F11':
         obj = F11
         lb = -600
         ub = 600
-        dim = 30
+        dim = 50
     elif F == 'F12':
         obj = F12
         lb = -50
         ub = 50
-        dim = 30
+        dim = 50
     elif F == 'F13':
         obj = F13
         lb = -50
         ub = 50
-        dim = 30
+        dim = 50
     elif F == 'F14':
         obj = F14
         lb = -65.536
@@ -371,12 +352,12 @@ def func(F):
         obj = Rastrigin
         lb = 2.56
         ub = 5.12
-        dim = 100
+        dim = 50
     elif F == 'Griewank':
         obj = Griewank
-        lb = -600
+        lb = 300
         ub = 600
-        dim = 100
+        dim = 50
     else:
         pass
 
