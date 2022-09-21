@@ -24,14 +24,17 @@ def F1(x):
 
 
 def F2(x):
-    return np.sum(np.abs(x)) + np.prod(np.abs(x))
+    abs_x = np.abs(x)
+    return np.sum(abs_x) + np.prod(abs_x)
 
 
 def F3(x):
     dim = np.size(x, 0)
     result = 0
+    y = x[::-1]
     for d in range(dim):
-        result += np.square(np.sum(x[:d + 1]))
+        result += (dim + 1) * y[d]
+
     return result
 
 
@@ -41,11 +44,12 @@ def F4(x):
 
 def F5(x):
     # Rosenbrock
-    return np.sum(100 * np.square(x[1:] - np.square(x[:-1])) + np.square(x[:-1] - 1))
+    # return np.sum(100 * np.square(x[1:] - np.square(x[:-1])) + np.square(x[:-1] - 1))
+    return rosen(x)
 
 
 def F6(x):
-    return np.sum(np.square(np.abs(x + 0.5)))
+    return np.sum(np.square(x + 0.5))
 
 
 def F7(x):
@@ -70,15 +74,12 @@ def F10(x):
 
 def F11(x):
     # Griewank
-    dim = np.size(x, 0)
-    return 1.0 + np.sum(np.square(x)) / 4000.0 - np.prod(np.cos(x / np.sqrt(np.arange(1, dim + 1))))
+    return 1.0 + np.sum(np.square(x)) / 4000.0 - np.prod(np.cos(x / np.sqrt(np.arange(1, np.size(x, 0) + 1))))
 
 
 def F12(x):
-    dim = np.size(x, 0)
-    return (np.pi / dim) * 10 * np.sin(np.pi * (1 + (x[0] + 1) / 4)) + np.sum(
-        (np.square((x[:-1] + 1) / 4)) * (
-                1 + 10 * np.square(np.sin(np.pi * ((x[:-1] + 1) / 4 + 1) + 1)) + np.sum(Ufun(x, 10, 100, 4))))
+    return (np.pi / np.size(x, 0)) * 10 * np.sin(np.pi * (1 + (x[0] + 1) / 4)) + np.sum(
+        (np.square((x[:-1] + 1) / 4)) * (1 + 10 * np.square(np.sin(np.pi * ((x[:-1] + 1) / 4 + 1) + 1)) + np.sum(Ufun(x, 10, 100, 4))))
 
 
 def F13(x):
@@ -235,14 +236,14 @@ def func(F):
         dim = 50
     elif F == 'F2':
         obj = F2
-        lb = -10
+        lb = 5
         ub = 10
         dim = 50
     elif F == 'F3':
         obj = F3
         lb = -100
         ub = 100
-        dim = 50
+        dim = 30
     elif F == 'F4':
         obj = F4
         lb = -100
@@ -250,8 +251,8 @@ def func(F):
         dim = 50
     elif F == 'F5':
         obj = F5
-        lb = -30
-        ub = 30
+        lb = -5
+        ub = 10
         dim = 50
     elif F == 'F6':
         obj = F6
@@ -262,7 +263,7 @@ def func(F):
         obj = F7
         lb = -1.28
         ub = 1.28
-        dim = 50
+        dim = 30
     elif F == 'F8':
         obj = F8
         lb = -500
@@ -270,7 +271,7 @@ def func(F):
         dim = 50
     elif F == 'F9':
         obj = F9
-        lb = -5.12
+        lb = 2.56
         ub = 5.12
         dim = 50
     elif F == 'F10':
@@ -280,19 +281,19 @@ def func(F):
         dim = 50
     elif F == 'F11':
         obj = F11
-        lb = -600
+        lb = 300
         ub = 600
         dim = 50
     elif F == 'F12':
         obj = F12
         lb = -50
         ub = 50
-        dim = 50
+        dim = 30
     elif F == 'F13':
         obj = F13
         lb = -50
         ub = 50
-        dim = 50
+        dim = 30
     elif F == 'F14':
         obj = F14
         lb = -65.536
