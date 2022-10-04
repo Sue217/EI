@@ -224,10 +224,10 @@ def Griewank(x):
 
 
 def func(F):
-    dim = 0
-    obj = None
-    lb = 0
-    ub = 0
+    # dim = 0
+    # obj = None
+    # lb = 0
+    # ub = 0
 
     if F == 'F1':
         obj = F1

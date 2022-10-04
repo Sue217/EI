@@ -27,7 +27,7 @@ ub: upper bound
 N = 160
 Iter = 100
 
-runs = 50
+runs = 10
 test_case = 2
 
 running_time = np.zeros(test_case)
@@ -119,5 +119,5 @@ plt.ylabel('Best Solution')
 plt.grid()
 plt.legend()
 mpl.rcParams.update({'font.size': 9})
-plt.savefig('/Users/sudo/Desktop/Research/src/figs/PGOA/cec_1_50d.png', dpi=1200)
+# plt.savefig('/Users/sudo/Desktop/Research/src/figs/PGOA/cec_1_50d.png', dpi=1200)
 plt.show()
