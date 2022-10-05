@@ -3,9 +3,8 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 
 import GOA as GOA
-import tiny_PGOA as PGOA
+import PGOA as PGOA
 from sko.PSO import PSO
-from sko.GA import GA
 
 import get_functions_details as getf
 import time
@@ -15,7 +14,7 @@ import bless
 now = datetime.now()
 print("Starting Time: ", now.strftime("%Y-%m-%d %H:%M:%S"))
 
-# bless.me()
+bless.me()
 
 """
 Test cases
@@ -31,7 +30,7 @@ N = 80
 Iter = 50
 
 runs = 30
-test_case = 4
+test_case = 3
 
 for I in range(1, 14):
     running_time = np.zeros(test_case)
@@ -51,37 +50,37 @@ for I in range(1, 14):
         print('Iteration:', iter + 1)
 
         # GA
-        ga = GA(func=func, n_dim=D, size_pop=N, max_iter=Iter, prob_mut=0.001, lb=lb, ub=ub, precision=1e-7)
-        zone_0 = time.time()
-        best_x, best_y = ga.run()
-        running_time[0] += time.time() - zone_0
-        curve[0] += ga.best_y
-        best[0] += best_y
+        # ga = GA(func=func, n_dim=D, size_pop=N, max_iter=Iter, prob_mut=0.001, lb=lb, ub=ub, precision=1e-7)
+        # zone_0 = time.time()
+        # best_x, best_y = ga.run()
+        # running_time[0] += time.time() - zone_0
+        # curve[0] += ga.best_y
+        # best[0] += best_y
 
         # PSO
-        pso = PSO(func=func, n_dim=D, pop=N, max_iter=Iter, lb=lb, ub=ub, w=0.8, c1=0.5, c2=0.5)
-        zone_1 = time.time()
+        pso = PSO(func=func, n_dim=D, pop=N, max_iter=Iter, lb=lb, ub=ub, w=0.3, c1=2, c2=2)
+        zone_0 = time.time()
         pso.run()
-        running_time[1] += time.time() - zone_1
+        running_time[0] += time.time() - zone_0
         for i in range(np.size(pso.gbest_y_hist)):
-            curve[1][i] += pso.gbest_y_hist[i]
-        best[1] += pso.gbest_y
+            curve[0][i] += pso.gbest_y_hist[i]
+        best[0] += pso.gbest_y
 
         # GOA
         goa = GOA.GOA(N, D, Iter, lb, ub, func)
-        zone_2 = time.time()
+        zone_1 = time.time()
         goa.run()
-        running_time[2] += time.time() - zone_2
-        curve[2] += goa.curve[1:]
-        best[2] += goa.best
+        running_time[1] += time.time() - zone_1
+        curve[1] += goa.curve[1:]
+        best[1] += goa.best
 
         # PGOA
         pgoa = PGOA.PGOA(N, D, Iter, lb, ub, func)
-        zone_3 = time.time()
+        zone_2 = time.time()
         pgoa.run()
-        running_time[3] += time.time() - zone_3
-        curve[3] += pgoa.curve[1:]
-        best[3] += pgoa.global_fmin
+        running_time[2] += time.time() - zone_2
+        curve[2] += pgoa.curve[1:]
+        best[2] += pgoa.global_fmin
 
         """
         groups: number of parallel groups (2^m, m is a positive integer, N/groups is an integer)
@@ -101,10 +100,10 @@ for I in range(1, 14):
         print('Experiment', i, ' Avg Best (', best[i], ') Avg T (', running_time[i], ')')
 
     # plot
-    plt.plot(np.arange(Iter), curve[0], 'c-', label='GA', linewidth=1)
-    plt.plot(np.arange(Iter), curve[1], 'm--', label='PSO', linewidth=1)
-    plt.plot(np.arange(Iter), curve[2], 'g--', label='GOA', linewidth=1)
-    plt.plot(np.arange(Iter), curve[3], 'r--', label='PGOA', linewidth=1)
+    plt.plot(np.arange(Iter), curve[0], 'c-', label='PSO', linewidth=1)
+    plt.plot(np.arange(Iter), curve[1], 'm-', label='GOA', linewidth=1)
+    plt.plot(np.arange(Iter), curve[2], 'r--', label='PGOA', linewidth=1)
+    # plt.plot(np.arange(Iter), curve[3], 'r--', label='PGOA', linewidth=1)
 
     plt.title(fs)
     mpl.rcParams.update({'font.size': 10})
@@ -113,5 +112,8 @@ for I in range(1, 14):
     plt.grid()
     plt.legend()
     mpl.rcParams.update({'font.size': 9})
-    # plt.savefig('/Users/sudo/Desktop/Research/src/figs/PGOA/cec_1_50d.png', dpi=1200)
+    plt.rcParams['figure.dpi'] = 1200
+    plt.rcParams['savefig.dpi'] = 1200
+    path = '/Users/sudo/Desktop/Research/src/figs/' + fs + '.png'
+    plt.savefig(path)
     plt.show()

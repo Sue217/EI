@@ -41,18 +41,18 @@ class GOA:
         
         for i in range(self.population):
             q = np.random.rand()
-            Xi = self.X[:, i]
+            Xi = self.X[i]
             if q >= 0.5:
                 u1 = np.random.uniform(-a, a, self.dimension)
                 rand = np.random.randint(self.population)
-                Xr = self.X[:, rand]
+                Xr = self.X[rand]
                 u2 = A * (Xi - Xr)
-                self.MX[:, i] = Xi + u1 + u2
+                self.MX[i] = Xi + u1 + u2
             else:
                 v1 = np.random.uniform(-b, b, self.dimension)
                 Xm = np.mean(self.X)
                 v2 = B * (Xi - Xm)
-                self.MX[:, i] = Xi + v1 + v2
+                self.MX[i] = Xi + v1 + v2
 
             self.bound_check()
             self.update()
@@ -66,13 +66,13 @@ class GOA:
         CC = 1 / (R * t2)
         c = 0.2  # 0.15
         for i in range(self.population):
-            Xi = self.X[:, i]
+            Xi = self.X[i]
             if CC >= c:
                 delta = CC * np.abs(Xi - self.Xb)
-                self.MX[:, i] = t2 * delta * (Xi - self.Xb) + Xi
+                self.MX[i] = t2 * delta * (Xi - self.Xb) + Xi
             else:
                 P = self.Levy(self.dimension)
-                self.MX[:, i] = self.Xb - (Xi - self.Xb) * P * t2
+                self.MX[i] = self.Xb - (Xi - self.Xb) * P * t2
 
             self.bound_check()
             self.update()
@@ -88,35 +88,34 @@ class GOA:
 
     def bound_check(self):
         for i in range(self.population):
-            self.MX[:, i] = np.where(
-                self.MX[:, i] < self.lb, self.lb, self.MX[:, i])
-            self.MX[:, i] = np.where(
-                self.MX[:, i] > self.ub, self.ub, self.MX[:, i])
+            self.MX[i] = np.where(
+                self.MX[i] < self.lb, self.lb, self.MX[i])
+            self.MX[i] = np.where(
+                self.MX[i] > self.ub, self.ub, self.MX[i])
 
     def update(self):
         for i in range(self.population):
-            new_fit = self.fitness_func(self.MX[:, i])
+            new_fit = self.fitness_func(self.MX[i])
             if new_fit < self.pop_fit[i]:
                 self.pop_fit[i] = new_fit
-                self.X[:, i] = self.MX[:, i]
+                self.X[i] = self.MX[i]
             if new_fit < self.best:
                 self.best = new_fit
-                self.Xb = self.MX[:, i]
+                self.Xb = self.MX[i]
 
     def run(self):
         # X: D * N
-        self.X = np.random.rand(self.dimension, self.population)
+        self.X = np.random.rand(self.population, self.dimension)
         for d in range(self.dimension):
-            self.X[d] = np.random.rand(
-                self.population) * (self.ub[d] - self.lb[d]) + self.lb[d]
+            self.X[:, d] = np.random.rand(self.population) * (self.ub[d] - self.lb[d]) + self.lb[d]
         self.MX = self.X
-        self.Xb = self.X[:, 0]
+        self.Xb = self.X[0]
 
         for i in range(self.population):
-            self.pop_fit[i] = self.fitness_func(self.X[:, i])
+            self.pop_fit[i] = self.fitness_func(self.X[i])
             if self.pop_fit[i] < self.best:
                 self.best = self.pop_fit[i]
-                self.Xb = self.X[:, i]
+                self.Xb = self.X[i]
 
         for iteration in range(1, self.max_iter + 1):
             rand = np.random.rand()

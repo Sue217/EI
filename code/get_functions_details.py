@@ -238,12 +238,12 @@ def func(F):
         obj = F2
         lb = 5
         ub = 10
-        dim = 50
+        dim = 100
     elif F == 'F3':
         obj = F3
         lb = -100
         ub = 100
-        dim = 30
+        dim = 50
     elif F == 'F4':
         obj = F4
         lb = -100
@@ -263,17 +263,17 @@ def func(F):
         obj = F7
         lb = -1.28
         ub = 1.28
-        dim = 30
+        dim = 100
     elif F == 'F8':
         obj = F8
         lb = -500
         ub = 500
-        dim = 50
+        dim = 100
     elif F == 'F9':
         obj = F9
         lb = 2.56
         ub = 5.12
-        dim = 50
+        dim = 100
     elif F == 'F10':
         obj = F10
         lb = -32
@@ -283,17 +283,17 @@ def func(F):
         obj = F11
         lb = 300
         ub = 600
-        dim = 50
+        dim = 100
     elif F == 'F12':
         obj = F12
         lb = -50
         ub = 50
-        dim = 30
+        dim = 50
     elif F == 'F13':
         obj = F13
         lb = -50
         ub = 50
-        dim = 30
+        dim = 50
     elif F == 'F14':
         obj = F14
         lb = -65.536

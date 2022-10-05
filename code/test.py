@@ -3,7 +3,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 
 import GOA as GOA
-import tiny_PGOA as PGOA
+import PGOA as PGOA
 from sko.PSO import PSO
 from sko.GA import GA
 
@@ -113,5 +113,8 @@ for I in range(1, 14):
     plt.grid()
     plt.legend()
     mpl.rcParams.update({'font.size': 9})
-    # plt.savefig('/Users/sudo/Desktop/Research/src/figs/PGOA/cec_1_50d.png', dpi=1200)
+    # plt.rcParams['figure.dpi'] = 1200
+    # plt.rcParams['savefig.dpi'] = 1200
+    # path = '/Users/sudo/Desktop/Research/src/figs/test/' + fs + '.png'
+    # plt.savefig(path)
     plt.show()
