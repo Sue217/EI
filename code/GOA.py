@@ -39,22 +39,20 @@ class GOA:
         A = (2 * np.random.rand() - 1) * a
         B = (2 * np.random.rand() - 1) * b
         
-        for iter in range(self.population):
+        for i in range(self.population):
             q = np.random.rand()
-            Xi = self.X[:, iter]
+            Xi = self.X[:, i]
             if q >= 0.5:
                 u1 = np.random.uniform(-a, a, self.dimension)
                 rand = np.random.randint(self.population)
-                while rand == iter:
-                    rand = np.random.randint(self.population)
                 Xr = self.X[:, rand]
                 u2 = A * (Xi - Xr)
-                self.MX[:, iter] = Xi + u1 + u2
+                self.MX[:, i] = Xi + u1 + u2
             else:
                 v1 = np.random.uniform(-b, b, self.dimension)
                 Xm = np.mean(self.X)
                 v2 = B * (Xi - Xm)
-                self.MX[:, iter] = Xi + v1 + v2
+                self.MX[:, i] = Xi + v1 + v2
 
             self.bound_check()
             self.update()
@@ -65,16 +63,16 @@ class GOA:
         vel = 1.5
         L = 0.2 + (2 - 0.2) * np.random.rand()
         R = (M * vel ** 2) / L
-        Capturability = 1 / (R * t2)
+        CC = 1 / (R * t2)
         c = 0.2  # 0.15
-        for iter in range(self.population):
-            Xi = self.X[:, iter]
-            if Capturability >= c:
-                delta = Capturability * np.abs(Xi - self.Xb)
-                self.MX[:, iter] = t2 * delta * (Xi - self.Xb) + Xi
+        for i in range(self.population):
+            Xi = self.X[:, i]
+            if CC >= c:
+                delta = CC * np.abs(Xi - self.Xb)
+                self.MX[:, i] = t2 * delta * (Xi - self.Xb) + Xi
             else:
                 P = self.Levy(self.dimension)
-                self.MX[:, iter] = self.Xb - (Xi - self.Xb) * P * t2
+                self.MX[:, i] = self.Xb - (Xi - self.Xb) * P * t2
 
             self.bound_check()
             self.update()

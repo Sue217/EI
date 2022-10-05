@@ -1,5 +1,5 @@
 # author: Jingbo Su
-# Gannet Optimization Algorithm with Parallel
+# Parallel Gannet Optimization Algorithm
 
 import numpy as np
 from scipy.special import gamma
@@ -19,16 +19,16 @@ class PGOA:
     communications: the number of iterations for communication
     """
 
-    def __init__(self, population, dimension, max_iter, lb, ub, func, groups=4, strategy=1, migration=0.5, copies=1,
-                 communications=20):
+    def __init__(self, population, dimension, max_iter, lb, ub, func, group=4, communication=20):
         self.population = population
         self.dimension = dimension
         self.max_iter = max_iter
         self.lb = lb
         self.ub = ub
 
-        self.groups = groups
-        self.Np = self.population // self.groups
+        self.group = group
+        self.communication = communication
+        self.Np = self.population // self.group
 
         self.X = None
         self.MX = None
@@ -36,18 +36,17 @@ class PGOA:
         self.curve = np.zeros(self.max_iter + 1)
         self.fitness_func = func
 
-        self.global_best = np.zeros(self.dimension)
-        self.global_min = np.inf
+        self.global_best = np.zeros(self.dimension, dtype=int)
+        self.global_fmin = np.inf
 
-        self.group_best = np.zeros((self.groups, self.dimension))
-        self.group_min = np.ones(self.groups) * np.inf
-        self.pop_fit = np.ones((self.groups, self.Np))
+        self.group_best = np.zeros(self.group, dtype=int)
+        self.group_fmin = np.ones(self.group) * np.inf
+        self.group_worst = np.zeros(self.group, dtype=int)
+        self.group_fmax = np.ones(self.group) * (-np.inf)
+        self.pop_fit = np.ones((self.group, self.Np)) * np.inf
 
-        self.rate = self.max_iter // communications
-        self.strategy = strategy
-        self.copies = copies
-        self.copies_ = copies
-        self.migration = migration
+        self.copies = self.copies_ = 2
+        self.migration = 0.75
 
     def exploration(self, iteration, group):
         t = 1 - iteration / self.max_iter
@@ -59,23 +58,21 @@ class PGOA:
         b = 2 * V(2 * np.pi * np.random.rand()) * t
         A = (2 * np.random.rand() - 1) * a
         B = (2 * np.random.rand() - 1) * b
-        
+
         for i in range(self.Np):
             q = np.random.rand()
-            Xi = self.X[group, :, i]
+            Xi = self.X[:, group * self.Np + i]
             if q >= 0.5:
                 u1 = np.random.uniform(-a, a, self.dimension)
                 rand = np.random.randint(self.Np)
-                while rand == i:
-                    rand = np.random.randint(self.Np)
-                Xr = self.X[group, :, rand]
+                Xr = self.X[:, group * self.Np + rand]
                 u2 = A * (Xi - Xr)
-                self.MX[group, :, i] = Xi + u1 + u2
+                self.MX[:, i] = Xi + u1 + u2
             else:
                 v1 = np.random.uniform(-b, b, self.dimension)
-                Xm = np.mean(self.X[group])
+                Xm = np.mean(self.X[:, group * self.Np: (group + 1) * self.Np])
                 v2 = B * (Xi - Xm)
-                self.MX[group, :, i] = Xi + v1 + v2
+                self.MX[:, i] = Xi + v1 + v2
 
             self.bound_check(group)
             self.update(group)
@@ -86,18 +83,16 @@ class PGOA:
         vel = 1.5
         L = 0.2 + (2 - 0.2) * np.random.rand()
         R = (M * vel ** 2) / L
-        Capturability = 1 / (R * t2)
+        CC = 1 / (R * t2)
         c = 0.2  # 0.15
         for i in range(self.Np):
-            Xi = self.X[group, :, i]
-            if Capturability >= c:
-                delta = Capturability * np.abs(Xi - self.group_best[group])
-                self.MX[group, :, i] = t2 * delta * \
-                    (Xi - self.group_best[group]) + Xi
+            Xi = self.X[:, group * self.Np + i]
+            if CC >= c:
+                delta = CC * np.abs(Xi - self.group_best[group])
+                self.MX[:, group * self.Np + i] = t2 * delta * (Xi - self.X[:, self.group_best[group]]) + Xi
             else:
                 P = self.Levy(self.dimension)
-                self.MX[group, :, i] = self.group_best[group] - \
-                    (Xi - self.group_best[group]) * P * t2
+                self.MX[:, group * self.Np + i] = self.X[:, self.group_best[group]] - (Xi - self.X[:, self.group_best[group]]) * P * t2
 
             self.bound_check(group)
             self.update(group)
@@ -109,137 +104,102 @@ class PGOA:
             gamma(((1 + beta) / 2) * beta * 2 ** ((beta - 1) / 2)))) ** (1 / beta)
         mu = np.random.rand(dimension)
         v = np.random.rand(dimension)
-        return 0.01 * mu * sigma / ((np.abs(v)) ** (1 / beta))
+        return 0.01 * mu * sigma / (v ** (1 / beta))
 
     def bound_check(self, group):
         for i in range(self.Np):
-            self.MX[group, :, i] = np.where(
-                self.MX[group, :, i] < self.lb, self.lb, self.MX[group, :, i])
-            self.MX[group, :, i] = np.where(
-                self.MX[group, :, i] > self.ub, self.ub, self.MX[group, :, i])
+            self.MX[:, group * self.Np + i] = np.where(
+                self.MX[:, group * self.Np + i] < self.lb, self.lb, self.MX[:, group * self.Np + i])
+            self.MX[:, group * self.Np + i] = np.where(
+                self.MX[:, group * self.Np + i] > self.ub, self.ub, self.MX[:, group * self.Np + i])
 
     def update(self, group):
         for i in range(self.Np):
-            new_fit = self.fitness_func(self.MX[group, :, i])
+            new_fit = self.fitness_func(self.MX[:, group * self.Np + i])
             if new_fit < self.pop_fit[group][i]:
                 self.pop_fit[group][i] = new_fit
-                self.X[group, :, i] = self.MX[group, :, i]
-            if new_fit < self.global_min:
-                self.global_min = new_fit
-                self.global_best = self.MX[group, :, i]
+                self.X[:, group * self.Np + i] = self.MX[:, group * self.Np + i]
+                if new_fit < self.global_fmin:
+                    self.global_fmin = new_fit
+                    self.global_best = group * self.Np + i
 
     def run(self):
-        # X: G * D * Np
-        self.X = np.zeros((self.groups, self.dimension, self.Np))
-        for G in range(self.groups):
-            for D in range(self.dimension):
-                self.X[G, D, :] = np.random.rand(
-                    self.Np) * (self.ub[D] - self.lb[D]) + self.lb[D]
-
+        # X: D * N
+        self.X = np.random.rand(self.dimension, self.population)
+        for d in range(self.dimension):
+            self.X[d] = np.random.rand(self.population) * (self.ub[d] - self.lb[d]) + self.lb[d]
         self.MX = self.X
 
-        for G in range(self.groups):
+        for g in range(self.group):
             for i in range(self.Np):
-                self.pop_fit[G][i] = self.fitness_func(self.X[G, :, i])
+                self.pop_fit[g][i] = self.fitness_func(self.X[:, g * self.Np + i])
                 # update group best value
-                if self.pop_fit[G][i] < self.group_min[G]:
-                    self.group_min[G] = self.pop_fit[G][i]
-                    self.group_best[G] = self.X[G, :, i]
+                if self.pop_fit[g][i] < self.group_fmin[g]:
+                    self.group_fmin[g] = self.pop_fit[g][i]
+                    self.group_best[g] = g * self.Np + i
 
                 # update global best value
-                if self.pop_fit[G][i] < self.global_min:
-                    self.global_min = self.pop_fit[G][i]
-                    self.global_best = self.X[G, :, i]
+                if self.pop_fit[g][i] < self.global_fmin:
+                    self.global_fmin = self.pop_fit[g][i]
+                    self.global_best = g * self.Np + i
 
-        # sub_groups = self.groups // 2
-        n = int(np.log2(self.groups))
+        n = int(np.log2(self.group))
         m = 0
 
         for iter in range(1, self.max_iter + 1):
-            for G in range(self.groups):
+            for g in range(self.group):
                 rand = np.random.rand()
                 if rand > 0.5:
-                    self.exploration(iter, G)
+                    self.exploration(iter, g)
                 else:
-                    self.exploitation(iter, G)
+                    self.exploitation(iter, g)
 
-                # Update
                 for i in range(self.Np):
-                    # update group best value
-                    if self.pop_fit[G][i] < self.group_min[G]:
-                        self.group_min[G] = self.pop_fit[G][i]
-                        self.group_best[G] = self.X[G, :, i]
+                    fit = self.pop_fit[g][i]
+                    xx = g * self.Np + i
+                    # Update
+                    if fit < self.group_fmin[g]:
+                        self.group_fmin[g] = fit
+                        self.group_best[g] = xx
+                        if fit < self.global_fmin:
+                            self.global_fmin = fit
+                            self.global_best = xx
+                    if fit > self.group_worst[g]:
+                        self.group_fmax[g] = fit
+                        self.group_worst[g] = xx
 
-                    # update global best value
-                    if self.pop_fit[G][i] < self.global_min:
-                        self.global_min = self.pop_fit[G][i]
-                        self.global_best = self.X[G, :, i]
-
-                if self.strategy == 1:
-                    if iter % self.rate == 0:
-                        sorted_pop_fit = np.sort(self.pop_fit[G])[::-1]
+                # Strategy.1
+                if iter % 5 == 0:
+                    # Random selection
+                    self.copies = self.copies_
+                    while self.copies > 0:
+                        q = g ^ (2 ** m)
+                        m = 0 if m == n - 1 else m + 1
+                        # q
+                        sorted_pop_fit = np.sort(self.pop_fit[q])[::-1]
                         expected_pop_fit = sorted_pop_fit[int(np.size(sorted_pop_fit) * self.migration)]
+                        for i in range(self.Np):
+                            if self.fitness_func(self.X[:, q * self.Np + i]) >= expected_pop_fit:
+                                self.X[:, q * self.Np + i] = self.X[:, self.group_best[g]]
 
-                        if iter % (self.rate * 2) == 0:
-                            # global update
-                            for i in range(self.Np):
-                                if self.fitness_func(self.X[G, :, i]) >= expected_pop_fit:
-                                    self.X[G, :, i] = self.global_best
-                        else:
-                            # local update
-                            for i in range(self.Np):
-                                if self.fitness_func(self.X[G, :, i]) >= expected_pop_fit:
-                                    self.X[G, :, i] = self.group_best[G]
+                        self.copies -= 1
 
-                elif self.strategy == 2:
-                    if iter % self.rate == 0:
-                        self.copies = self.copies_
-                        while self.copies > 0:
-                            q = G ^ (2 ** m)
-                            if m == n - 1:
-                                m = 0
-                            else:
-                                m += 1
-                            for i in range(self.Np):
-                                if self.group_min[G] < self.group_min[q]:
-                                    self.group_min[q] = self.group_min[G]
-                                    self.X[q, :, i] = self.group_best[G]
-                            self.copies -= 1
+                # Strategy.2
+                elif iter % 3 == 0:
+                    idx = self.group_worst[g]
+                    wox = self.X[:, idx]
+                    half = np.size(wox) // 2
+                    wox[:half] = self.X[:, self.group_best[g]][:half]
+                    wox[half:] = self.X[:, self.global_best][half:]
+                    fit = self.fitness_func(wox)
+                    if fit < self.group_fmax[g]:
+                        self.group_fmax[g] = fit
+                        self.group_worst[g] = idx
+                        if fit < self.group_fmin[g]:
+                            self.group_fmin[g] = fit
+                            self.group_best[g] = idx
+                            if fit < self.global_fmin:
+                                self.global_fmin = fit
+                                self.global_best = idx
 
-                elif self.strategy == 3:
-                    if iter % self.rate == 0:
-                        rand = np.random.rand()
-
-                        # Strategy 1
-                        if rand <= 0.5:
-                            if iter % self.rate == 0:
-                                sorted_pop_fit = np.sort(self.pop_fit[G])[::-1]
-                                expected_pop_fit = sorted_pop_fit[int(np.size(sorted_pop_fit) * self.migration)]
-
-                                if iter % (self.rate * 2) == 0:
-                                    # global update
-                                    for i in range(self.Np):
-                                        if self.fitness_func(self.X[G, :, i]) >= expected_pop_fit:
-                                            self.X[G, :, i] = self.global_best
-                                else:
-                                    # local update
-                                    for i in range(self.Np):
-                                        if self.fitness_func(self.X[G, :, i]) >= expected_pop_fit:
-                                            self.X[G, :, i] = self.group_best[G]
-
-                        # Strategy 2
-                        else:
-                            self.copies = self.copies_
-                            while self.copies > 0:
-                                q = G ^ (2 ** m)
-                                if m == n - 1:
-                                    m = 0
-                                else:
-                                    m += 1
-                                for i in range(self.Np):
-                                    if self.group_min[G] < self.group_min[q]:
-                                        self.group_min[q] = self.group_min[G]
-                                        self.X[q, :, i] = self.group_best[G]
-                                self.copies -= 1
-
-            self.curve[iter] = self.global_min
+            self.curve[iter] = self.global_fmin

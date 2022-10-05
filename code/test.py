@@ -27,8 +27,8 @@ lb: lower bound
 ub: upper bound
 """
 
-N = 80
-Iter = 50
+N = 16
+Iter = 5
 
 runs = 30
 test_case = 4

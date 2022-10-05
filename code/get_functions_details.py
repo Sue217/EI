@@ -44,7 +44,6 @@ def F4(x):
 
 def F5(x):
     # Rosenbrock
-    # return np.sum(100 * np.square(x[1:] - np.square(x[:-1])) + np.square(x[:-1] - 1))
     return rosen(x)
 
 
@@ -211,6 +210,7 @@ def F23(x):
 
 
 def Rosenbrock(x):
+    # return np.sum(100 * np.square(x[1:] - np.square(x[:-1])) + np.square(x[:-1] - 1))
     return rosen(x)
 
 
@@ -224,10 +224,10 @@ def Griewank(x):
 
 
 def func(F):
-    # dim = 0
-    # obj = None
-    # lb = 0
-    # ub = 0
+    dim = 0
+    obj = None
+    lb = 0
+    ub = 0
 
     if F == 'F1':
         obj = F1

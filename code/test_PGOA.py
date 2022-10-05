@@ -5,7 +5,7 @@ import numpy as np
 from scipy.special import gamma
 
 
-class tiny_PGOA:
+class PGOA:
     """
     population: population size
     dimension: problem dimension
@@ -19,7 +19,8 @@ class tiny_PGOA:
     communications: the number of iterations for communication
     """
 
-    def __init__(self, population, dimension, max_iter, lb, ub, func, groups=4, strategy=1, migration=0.75, copies=2, communications=20):
+    def __init__(self, population, dimension, max_iter, lb, ub, func, groups=4, strategy=1, migration=0.5, copies=1,
+                 communications=20):
         self.population = population
         self.dimension = dimension
         self.max_iter = max_iter
@@ -91,10 +92,12 @@ class tiny_PGOA:
             Xi = self.X[group, :, i]
             if Capturability >= c:
                 delta = Capturability * np.abs(Xi - self.group_best[group])
-                self.MX[group, :, i] = t2 * delta * (Xi - self.group_best[group]) + Xi
+                self.MX[group, :, i] = t2 * delta * \
+                                       (Xi - self.group_best[group]) + Xi
             else:
                 P = self.Levy(self.dimension)
-                self.MX[group, :, i] = self.group_best[group] - (Xi - self.group_best[group]) * P * t2
+                self.MX[group, :, i] = self.group_best[group] - \
+                                       (Xi - self.group_best[group]) * P * t2
 
             self.bound_check(group)
             self.update(group)
@@ -110,8 +113,10 @@ class tiny_PGOA:
 
     def bound_check(self, group):
         for i in range(self.Np):
-            self.MX[group, :, i] = np.where(self.MX[group, :, i] < self.lb, self.lb, self.MX[group, :, i])
-            self.MX[group, :, i] = np.where(self.MX[group, :, i] > self.ub, self.ub, self.MX[group, :, i])
+            self.MX[group, :, i] = np.where(
+                self.MX[group, :, i] < self.lb, self.lb, self.MX[group, :, i])
+            self.MX[group, :, i] = np.where(
+                self.MX[group, :, i] > self.ub, self.ub, self.MX[group, :, i])
 
     def update(self, group):
         for i in range(self.Np):
@@ -146,6 +151,7 @@ class tiny_PGOA:
                     self.global_min = self.pop_fit[G][i]
                     self.global_best = self.X[G, :, i]
 
+        # sub_groups = self.groups // 2
         n = int(np.log2(self.groups))
         m = 0
 
@@ -169,22 +175,71 @@ class tiny_PGOA:
                         self.global_min = self.pop_fit[G][i]
                         self.global_best = self.X[G, :, i]
 
-                if iter % self.rate == 0:
-                    # random select copies(=2) groups and update G
-                    self.copies = self.copies_
-                    while self.copies > 0:
-                        q = G ^ (2 ** m)
-                        if m == n - 1:
-                            m = 0
-                        else:
-                            m += 1
-                        # q
-                        sorted_pop_fit = np.sort(self.pop_fit[q])[::-1]
+                if self.strategy == 1:
+                    if iter % self.rate == 0:
+                        sorted_pop_fit = np.sort(self.pop_fit[G])[::-1]
                         expected_pop_fit = sorted_pop_fit[int(np.size(sorted_pop_fit) * self.migration)]
-                        for i in range(self.Np):
-                            if self.fitness_func(self.X[q, :, i]) >= expected_pop_fit:
-                                self.X[q, :, i] = self.group_best[G]
 
-                        self.copies -= 1
+                        if iter % (self.rate * 2) == 0:
+                            # global update
+                            for i in range(self.Np):
+                                if self.fitness_func(self.X[G, :, i]) >= expected_pop_fit:
+                                    self.X[G, :, i] = self.global_best
+                        else:
+                            # local update
+                            for i in range(self.Np):
+                                if self.fitness_func(self.X[G, :, i]) >= expected_pop_fit:
+                                    self.X[G, :, i] = self.group_best[G]
+
+                elif self.strategy == 2:
+                    if iter % self.rate == 0:
+                        self.copies = self.copies_
+                        while self.copies > 0:
+                            q = G ^ (2 ** m)
+                            if m == n - 1:
+                                m = 0
+                            else:
+                                m += 1
+                            for i in range(self.Np):
+                                if self.group_min[G] < self.group_min[q]:
+                                    self.group_min[q] = self.group_min[G]
+                                    self.X[q, :, i] = self.group_best[G]
+                            self.copies -= 1
+
+                elif self.strategy == 3:
+                    if iter % self.rate == 0:
+                        rand = np.random.rand()
+
+                        # Strategy 1
+                        if rand <= 0.5:
+                            if iter % self.rate == 0:
+                                sorted_pop_fit = np.sort(self.pop_fit[G])[::-1]
+                                expected_pop_fit = sorted_pop_fit[int(np.size(sorted_pop_fit) * self.migration)]
+
+                                if iter % (self.rate * 2) == 0:
+                                    # global update
+                                    for i in range(self.Np):
+                                        if self.fitness_func(self.X[G, :, i]) >= expected_pop_fit:
+                                            self.X[G, :, i] = self.global_best
+                                else:
+                                    # local update
+                                    for i in range(self.Np):
+                                        if self.fitness_func(self.X[G, :, i]) >= expected_pop_fit:
+                                            self.X[G, :, i] = self.group_best[G]
+
+                        # Strategy 2
+                        else:
+                            self.copies = self.copies_
+                            while self.copies > 0:
+                                q = G ^ (2 ** m)
+                                if m == n - 1:
+                                    m = 0
+                                else:
+                                    m += 1
+                                for i in range(self.Np):
+                                    if self.group_min[G] < self.group_min[q]:
+                                        self.group_min[q] = self.group_min[G]
+                                        self.X[q, :, i] = self.group_best[G]
+                                self.copies -= 1
 
             self.curve[iter] = self.global_min
