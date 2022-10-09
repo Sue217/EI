@@ -16,10 +16,9 @@ class PGOA:
     strategy: parallel strategy choice (1, 2, 3)
     migration: the rate of the best particle position is migrated and mutated to substitute the particles of the receiving group (0.25, 0.5, 0.75, 1.0)
     copies: the number of worse particles substituted at each receiving group (1, 2)
-    communications: the number of iterations for communication
     """
 
-    def __init__(self, population, dimension, max_iter, lb, ub, func, group=4, communication=20):
+    def __init__(self, population, dimension, max_iter, lb, ub, func, group=8):
         self.population = population
         self.dimension = dimension
         self.max_iter = max_iter
@@ -27,7 +26,6 @@ class PGOA:
         self.ub = ub
 
         self.group = group
-        self.communication = communication
         self.Np = self.population // self.group
 
         self.X = None
